@@ -1,0 +1,18 @@
+# VS Code
+.vscode/
+*.code-workspace
+
+# Build output
+build/
+*.exe
+
+# Compiler runtime (Windows / MinGW)
+*.dll
+
+# Object files
+*.o
+*.obj
+
+Makefile
+
+Assets/
