@@ -64,7 +64,7 @@ int main()
     float titlePulse = 0.0f;
     float starDrift = 0.0f;
 
-    Rectangle playBtn = {520, 520, 240, 100};
+    Rectangle playBtn = {500, 510, 280, 90};
 
     while (!WindowShouldClose())
     {
@@ -120,26 +120,85 @@ int main()
                 DrawText("PRESS ENTER TO START",
                          VIRTUAL_WIDTH / 2 - 133, VIRTUAL_HEIGHT / 2 - 40, 20, WHITE);
 
-            DrawRectangleRounded(playBtn, 0.35f, 6, BLUE);
-
-            const char *text = "PLAY";
-            int fontSize = 40;
-
-            int textWidth = MeasureText(text, fontSize);
-
-            DrawText(
-                text,
-                playBtn.x + (playBtn.width - textWidth) / 2,
-                playBtn.y + (playBtn.height - fontSize) / 2,
-                fontSize,
-                WHITE);
-
+            //-----------------------PLAY BUTTON UI---------------------------------------------
             Vector2 mouse = GetMousePosition();
 
             mouse.x = (mouse.x - offsetX) / scale;
             mouse.y = (mouse.y - offsetY) / scale;
 
             bool hovering = CheckCollisionPointRec(mouse, playBtn);
+
+            Color btn = hovering
+                            ? Color{35, 70, 140, 255} // brighter, slightly more saturated hover base
+                            : Color{22, 38, 74, 255};
+
+            Color glow = hovering
+                             ? Fade(Color{80, 180, 255, 255}, 0.35f) // stronger glow on hover
+                             : Fade(Color{80, 180, 255, 255}, 0.18f);
+
+            // Outer glow
+            DrawRectangleRounded(
+                {playBtn.x - 4,
+                 playBtn.y - 4,
+                 playBtn.width + 8,
+                 playBtn.height + 8},
+                0.30f,
+                8,
+                glow // CHANGED: uses dynamic glow instead of fixed fade
+            );
+
+            // Main button
+            DrawRectangleRounded(
+                playBtn,
+                0.28f,
+                8,
+                btn);
+
+            // Top shine
+            DrawRectangleRounded(
+                {playBtn.x,
+                 playBtn.y,
+                 playBtn.width,
+                 playBtn.height / 2},
+                0.28f,
+                8,
+                Fade(WHITE, 0.05f));
+
+            const char *text = "PLAY";
+
+            int fontSize = 42;
+
+            int textWidth = MeasureText(text, fontSize);
+
+            int textX =
+                playBtn.x +
+                (playBtn.width - textWidth) / 2;
+
+            int textY =
+                playBtn.y +
+                (playBtn.height - fontSize) / 2;
+
+            //  hover text glow improved for nebula contrast
+
+            Color textGlow = hovering
+                                 ? Fade(SKYBLUE, 0.55f)
+                                 : Fade(SKYBLUE, 0.35f);
+
+            // Glow shadow
+            DrawText(
+                text,
+                textX + 2,
+                textY + 2,
+                fontSize,
+                textGlow);
+
+            // Main text
+            DrawText(
+                text,
+                textX,
+                textY,
+                fontSize,
+                Color{220, 240, 255, 255});
 
             if (hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
             {
