@@ -37,6 +37,22 @@ int main()
     InitWindow(1600, 900, "SpaceFlyer");
     SetTargetFPS(60);
 
+    // Actual window size on the current display.
+    // GetRenderWidth/Height are useful on HiDPI displays.
+    int screenW = GetRenderWidth();
+    int screenH = GetRenderHeight();
+
+    // Keep aspect ratio and fit inside the screen.
+    float scaleX = (float)screenW / (float)VIRTUAL_WIDTH;
+    float scaleY = (float)screenH / (float)VIRTUAL_HEIGHT;
+    float scale = std::min(scaleX, scaleY);
+
+    int drawW = (int)(VIRTUAL_WIDTH * scale);
+    int drawH = (int)(VIRTUAL_HEIGHT * scale);
+
+    int offsetX = (screenW - drawW) / 2;
+    int offsetY = (screenH - drawH) / 2;
+
     // This is the off-screen buffer where the game is actually drawn.
     RenderTexture2D target = LoadRenderTexture(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
@@ -44,8 +60,11 @@ int main()
     for (int i = 0; i < 250; i++)
         menuStars.push_back({(float)GetRandomValue(0, VIRTUAL_WIDTH), (float)GetRandomValue(0, VIRTUAL_HEIGHT)});
 
+    // ---------------Pending--------------
     float titlePulse = 0.0f;
     float starDrift = 0.0f;
+
+    Rectangle playBtn = {520, 520, 240, 100};
 
     while (!WindowShouldClose())
     {
@@ -67,11 +86,13 @@ int main()
 
             DrawCircleV({80.f, 400.f}, 80.f, Fade(Color{30, 90, 120, 255}, 0.18f));
 
+            DrawCircleV({980.f, 420.f}, 220.f, Fade(Color{58, 22, 110, 255}, 0.35f));
+
             // Drifting parallax stars
             for (auto &st : menuStars)
             {
-                float sx = fmodf(st.x + starDrift * 0.25f, (float)VIRTUAL_WIDTH);
-                DrawPixelV(Vector2{sx, st.y}, Color{180, 200, 255, 200});
+                // float sx = fmodf(st.x + starDrift * 0.25f, (float)VIRTUAL_WIDTH);
+                DrawPixelV(Vector2{st.x, st.y}, Color{180, 200, 255, 200});
             }
 
             // ── Title ───────────────────────────────────────────────────
@@ -98,25 +119,44 @@ int main()
             if (fmodf(titlePulse, 3.f) < 2.2f)
                 DrawText("PRESS ENTER TO START",
                          VIRTUAL_WIDTH / 2 - 133, VIRTUAL_HEIGHT / 2 - 40, 20, WHITE);
+
+            DrawRectangleRounded(playBtn, 0.35f, 6, BLUE);
+
+            const char *text = "PLAY";
+            int fontSize = 40;
+
+            int textWidth = MeasureText(text, fontSize);
+
+            DrawText(
+                text,
+                playBtn.x + (playBtn.width - textWidth) / 2,
+                playBtn.y + (playBtn.height - fontSize) / 2,
+                fontSize,
+                WHITE);
+
+            Vector2 mouse = GetMousePosition();
+
+            mouse.x = (mouse.x - offsetX) / scale;
+            mouse.y = (mouse.y - offsetY) / scale;
+
+            bool hovering = CheckCollisionPointRec(mouse, playBtn);
+
+            if (hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                state = PLAYING;
+            }
+        }
+
+        if (state == PLAYING)
+        {
+            ClearBackground(BLACK);
+            if (IsKeyDown(KEY_R))
+            {
+                state = MENU;
+            }
         }
 
         EndTextureMode();
-
-        // Actual window size on the current display.
-        // GetRenderWidth/Height are useful on HiDPI displays.
-        int screenW = GetRenderWidth();
-        int screenH = GetRenderHeight();
-
-        // Keep aspect ratio and fit inside the screen.
-        float scaleX = (float)screenW / (float)VIRTUAL_WIDTH;
-        float scaleY = (float)screenH / (float)VIRTUAL_HEIGHT;
-        float scale = std::min(scaleX, scaleY);
-
-        int drawW = (int)(VIRTUAL_WIDTH * scale);
-        int drawH = (int)(VIRTUAL_HEIGHT * scale);
-
-        int offsetX = (screenW - drawW) / 2;
-        int offsetY = (screenH - drawH) / 2;
 
         BeginDrawing();
         ClearBackground(BLACK);
