@@ -37,6 +37,9 @@ int main()
     InitWindow(1600, 900, "SpaceFlyer");
     SetTargetFPS(60);
 
+    // Esc key handling
+    SetExitKey(KEY_NULL);
+
     // This is the off-screen buffer where the game is actually drawn.
     RenderTexture2D target = LoadRenderTexture(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
@@ -68,8 +71,6 @@ int main()
 
     while (!WindowShouldClose())
     {
-        // Esc key handling
-        SetExitKey(KEY_NULL);
         if (!showSettings && IsKeyPressed(KEY_ESCAPE))
         {
             CloseWindow();
@@ -250,16 +251,31 @@ int main()
 
             DrawRectangleRounded(
                 settingsBtn,
-                0.35f,
+                0.50f,
                 8,
                 settingsColor);
 
+            float desiredSize = 40.0f;
+
+            float iconScale =
+                desiredSize / settingsIcon.width;
+
+            float finalWidth =
+                settingsIcon.width * iconScale;
+
+            float finalHeight =
+                settingsIcon.height * iconScale;
+
+            Vector2 iconPos =
+                {
+                    settingsBtn.x + (settingsBtn.width - finalWidth) / 2,
+                    settingsBtn.y + (settingsBtn.height - finalHeight) / 2};
+
             DrawTextureEx(
                 settingsIcon,
-                {settingsBtn.x + 5,
-                 settingsBtn.y + 5},
+                iconPos,
                 0.0f,
-                0.032f,
+                iconScale,
                 WHITE);
 
             if (showSettings)
@@ -268,7 +284,7 @@ int main()
                     {340, 120, 600, 420},
                     0.04f,
                     10,
-                    Fade(BLACK, 0.82f));
+                    BLACK);
 
                 DrawRectangleRoundedLinesEx(
                     {340, 120, 600, 420},
@@ -279,7 +295,7 @@ int main()
 
                 DrawText(
                     "SETTINGS",
-                    500,
+                    535,
                     150,
                     40,
                     SKYBLUE);
