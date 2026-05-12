@@ -47,10 +47,6 @@ int main()
     for (int i = 0; i < 250; i++)
         menuStars.push_back({(float)GetRandomValue(0, VIRTUAL_WIDTH), (float)GetRandomValue(0, VIRTUAL_HEIGHT)});
 
-    // ---------------Pending--------------
-    float titlePulse = 0.0f;
-    float starDrift = 0.0f;
-
     Rectangle playBtn = {500, 510, 280, 90};
 
     bool showSettings = false;
@@ -67,10 +63,14 @@ int main()
         settingsIcon,
         TEXTURE_FILTER_BILINEAR);
 
-    bool fullscreen = false;
+    float titlePulse = 0;
+    float starDrift = 0;
 
     while (!WindowShouldClose())
     {
+        titlePulse += GetFrameTime() * 2.0f;
+        starDrift += GetFrameTime() * 30.0f;
+
         if (!showSettings && IsKeyPressed(KEY_ESCAPE))
         {
             CloseWindow();
@@ -78,8 +78,13 @@ int main()
 
         if (IsKeyPressed(KEY_F))
         {
+            UnloadRenderTexture(target);
+
             ToggleFullscreen();
-            fullscreen = !fullscreen;
+
+            target = LoadRenderTexture(
+                VIRTUAL_WIDTH,
+                VIRTUAL_HEIGHT);
         }
 
         // Actual window size on the current display.
@@ -125,34 +130,44 @@ int main()
             // Drifting parallax stars
             for (auto &st : menuStars)
             {
-                // float sx = fmodf(st.x + starDrift * 0.25f, (float)VIRTUAL_WIDTH);
-                DrawPixelV(Vector2{st.x, st.y}, Color{180, 200, 255, 200});
+                float sx =
+                    fmodf(
+                        st.x - starDrift * 0.25f +
+                            VIRTUAL_WIDTH,
+                        (float)VIRTUAL_WIDTH);
+
+                DrawPixelV(
+                    Vector2{sx, st.y},
+                    Color{180, 200, 255, 200});
             }
 
-            // ── Title ───────────────────────────────────────────────────
+            // Shadow pass (glow under title)
             float pulse = 0.85f + 0.15f * sinf(titlePulse);
+
             Color titleCol = {
                 (unsigned char)(70.f * pulse),
                 (unsigned char)(170.f * pulse),
-                255, 255};
+                255,
+                255};
 
-            // Shadow pass (glow under title)
-            DrawText("SPACEFLYER", VIRTUAL_WIDTH / 2 - 162, VIRTUAL_HEIGHT / 2 - 133, 50, Fade(SKYBLUE, 0.30f));
+            DrawText("Space Flyer", VIRTUAL_WIDTH / 2 - 272, VIRTUAL_HEIGHT / 2 - 173, 90, Fade(SKYBLUE, 0.30f));
             // Main title
-            DrawText("SPACEFLYER", VIRTUAL_WIDTH / 2 - 160, VIRTUAL_HEIGHT / 2 - 130, 50, titleCol);
+            DrawText("Space Flyer", VIRTUAL_WIDTH / 2 - 270, VIRTUAL_HEIGHT / 2 - 170, 90, titleCol);
 
             // Tagline
-            DrawText("Navigate the tunnel. Don't touch the walls.",
-                     VIRTUAL_WIDTH / 2 - 190, VIRTUAL_HEIGHT / 2 - 68, 16, Color{150, 180, 220, 200});
+            DrawText("Precision is Survival.",
+                     VIRTUAL_WIDTH / 2 - 120, VIRTUAL_HEIGHT / 2 - 68, 24, Color{112, 128, 144, 200});
 
             // Controls hint (subtle, always visible)
             DrawText("[Arrow Keys] steer     [F] Fullscreen",
-                     VIRTUAL_WIDTH / 2 - 148, VIRTUAL_HEIGHT / 2 - 10, 14, Color{100, 140, 200, 155});
+                     VIRTUAL_WIDTH / 2 - 160, VIRTUAL_HEIGHT / 2 + 20, 18, Color{211, 211, 211, 155});
 
-            // Blinking "PRESS ENTER" prompt (visible 2.2s, hidden 0.8s)
-            if (fmodf(titlePulse, 3.f) < 2.2f)
-                DrawText("PRESS ENTER TO START",
-                         VIRTUAL_WIDTH / 2 - 133, VIRTUAL_HEIGHT / 2 - 40, 20, WHITE);
+            float enterAlpha =
+                0.55f + 0.45f * sinf(titlePulse * 2.0f);
+
+            // Blinking "PRESS ENTER" prompt
+            DrawText("PRESS ENTER TO START",
+                     VIRTUAL_WIDTH / 2 - 133, VIRTUAL_HEIGHT / 2 - 20, 20, Fade(WHITE, enterAlpha));
 
             //-----------------------PLAY BUTTON UI---------------------------------------------
             Vector2 mouse = GetMousePosition();
@@ -349,7 +364,7 @@ int main()
         if (state == PLAYING)
         {
             ClearBackground(BLACK);
-            if (IsKeyDown(KEY_R))
+            if (IsKeyPressed(KEY_R))
             {
                 state = MENU;
             }
