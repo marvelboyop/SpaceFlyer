@@ -37,22 +37,6 @@ int main()
     InitWindow(1600, 900, "SpaceFlyer");
     SetTargetFPS(60);
 
-    // Actual window size on the current display.
-    // GetRenderWidth/Height are useful on HiDPI displays.
-    int screenW = GetRenderWidth();
-    int screenH = GetRenderHeight();
-
-    // Keep aspect ratio and fit inside the screen.
-    float scaleX = (float)screenW / (float)VIRTUAL_WIDTH;
-    float scaleY = (float)screenH / (float)VIRTUAL_HEIGHT;
-    float scale = std::min(scaleX, scaleY);
-
-    int drawW = (int)(VIRTUAL_WIDTH * scale);
-    int drawH = (int)(VIRTUAL_HEIGHT * scale);
-
-    int offsetX = (screenW - drawW) / 2;
-    int offsetY = (screenH - drawH) / 2;
-
     // This is the off-screen buffer where the game is actually drawn.
     RenderTexture2D target = LoadRenderTexture(VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
@@ -68,8 +52,23 @@ int main()
 
     while (!WindowShouldClose())
     {
-        // Draw the whole game into the render texture.
+        // Actual window size on the current display.
+        // GetRenderWidth/Height are useful on HiDPI displays.
+        int screenW = GetRenderWidth();
+        int screenH = GetRenderHeight();
 
+        // Keep aspect ratio and fit inside the screen.
+        float scaleX = (float)screenW / (float)VIRTUAL_WIDTH;
+        float scaleY = (float)screenH / (float)VIRTUAL_HEIGHT;
+        float scale = std::min(scaleX, scaleY);
+
+        int drawW = (int)(VIRTUAL_WIDTH * scale);
+        int drawH = (int)(VIRTUAL_HEIGHT * scale);
+
+        int offsetX = (screenW - drawW) / 2;
+        int offsetY = (screenH - drawH) / 2;
+
+        // Draw the whole game into the render texture.
         BeginTextureMode(target);
         ClearBackground(BLACK);
 
@@ -200,7 +199,8 @@ int main()
                 fontSize,
                 Color{220, 240, 255, 255});
 
-            if (hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            if ((hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+                IsKeyPressed(KEY_ENTER))
             {
                 state = PLAYING;
             }
