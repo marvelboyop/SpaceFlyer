@@ -50,8 +50,37 @@ int main()
 
     Rectangle playBtn = {500, 510, 280, 90};
 
+    bool showSettings = false;
+
+    Rectangle settingsBtn = {
+        VIRTUAL_WIDTH - 90,
+        30,
+        50,
+        50};
+
+    Texture2D settingsIcon = LoadTexture("assets/icons/settings.png");
+
+    SetTextureFilter(
+        settingsIcon,
+        TEXTURE_FILTER_BILINEAR);
+
+    bool fullscreen = false;
+
     while (!WindowShouldClose())
     {
+        // Esc key handling
+        SetExitKey(KEY_NULL);
+        if (!showSettings && IsKeyPressed(KEY_ESCAPE))
+        {
+            CloseWindow();
+        }
+
+        if (IsKeyPressed(KEY_F))
+        {
+            ToggleFullscreen();
+            fullscreen = !fullscreen;
+        }
+
         // Actual window size on the current display.
         // GetRenderWidth/Height are useful on HiDPI displays.
         int screenW = GetRenderWidth();
@@ -74,6 +103,11 @@ int main()
 
         if (state == MENU)
         {
+            if (showSettings && IsKeyPressed(KEY_ESCAPE))
+            {
+                showSettings = false;
+            }
+
             // Nebula background: soft glowing clouds
             DrawCircleV({150.f, 120.f}, 130.f, Fade(Color{58, 22, 110, 255}, 0.35f));
 
@@ -124,6 +158,14 @@ int main()
 
             mouse.x = (mouse.x - offsetX) / scale;
             mouse.y = (mouse.y - offsetY) / scale;
+
+            bool hoveringOnSettings =
+                CheckCollisionPointRec(mouse, settingsBtn);
+
+            if (hoveringOnSettings && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            {
+                showSettings = !showSettings;
+            }
 
             bool hovering = CheckCollisionPointRec(mouse, playBtn);
 
@@ -199,10 +241,92 @@ int main()
                 fontSize,
                 Color{220, 240, 255, 255});
 
-            if ((hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
-                IsKeyPressed(KEY_ENTER))
+            // ---------------- SETTINGS BUTTON ----------------
+
+            Color settingsColor =
+                hoveringOnSettings
+                    ? Color{50, 90, 170, 255}
+                    : Color{25, 45, 85, 255};
+
+            DrawRectangleRounded(
+                settingsBtn,
+                0.35f,
+                8,
+                settingsColor);
+
+            DrawTextureEx(
+                settingsIcon,
+                {settingsBtn.x + 5,
+                 settingsBtn.y + 5},
+                0.0f,
+                0.032f,
+                WHITE);
+
+            if (showSettings)
             {
-                state = PLAYING;
+                DrawRectangleRounded(
+                    {340, 120, 600, 420},
+                    0.04f,
+                    10,
+                    Fade(BLACK, 0.82f));
+
+                DrawRectangleRoundedLinesEx(
+                    {340, 120, 600, 420},
+                    0.04f,
+                    10,
+                    2,
+                    Fade(SKYBLUE, 0.5f));
+
+                DrawText(
+                    "SETTINGS",
+                    500,
+                    150,
+                    40,
+                    SKYBLUE);
+
+                DrawText(
+                    "Controls",
+                    420,
+                    240,
+                    28,
+                    WHITE);
+
+                DrawText(
+                    "Arrow Keys -> Move",
+                    420,
+                    290,
+                    22,
+                    LIGHTGRAY);
+
+                DrawText(
+                    "F -> Fullscreen",
+                    420,
+                    330,
+                    22,
+                    LIGHTGRAY);
+
+                DrawText(
+                    "ENTER -> Start Game",
+                    420,
+                    370,
+                    22,
+                    LIGHTGRAY);
+
+                DrawText(
+                    "ESC -> Close Settings",
+                    420,
+                    410,
+                    22,
+                    LIGHTGRAY);
+            }
+
+            if (!showSettings)
+            {
+                if ((hovering && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) ||
+                    IsKeyPressed(KEY_ENTER))
+                {
+                    state = PLAYING;
+                }
             }
         }
 
@@ -236,6 +360,7 @@ int main()
         EndDrawing();
     }
 
+    UnloadTexture(settingsIcon);
     UnloadRenderTexture(target);
     CloseWindow();
     return 0;
