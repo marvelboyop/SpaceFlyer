@@ -1,17 +1,24 @@
-# VS Code
-.vscode/
-*.code-workspace
-
+# =========================
 # Build output
+# =========================
+obj/
 build/
-*.exe
-
-# Compiler runtime (Windows / MinGW)
-*.dll
-
-# Object files
 *.o
-*.obj
+*.exe
+*.out
 
-Makefile
+# =========================
+# Logs / temp
+# =========================
+*.log
 
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Optional: compiled assets
+# =========================
+*.dll
