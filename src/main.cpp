@@ -25,6 +25,9 @@ int main()
 
     while (!WindowShouldClose())
     {
+        float dt = GetFrameTime();
+        shipPulse += dt;
+
         if (IsKeyPressed(KEY_ESCAPE))
         {
             CloseWindow();
