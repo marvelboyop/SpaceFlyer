@@ -15,7 +15,6 @@ static const int BASE_WIDTH = 1280;
 static const int BASE_HEIGHT = 720;
 
 // Animation timers
-extern float menuT;      // figure-8 path parameter
 extern float titlePulse; // title glow oscillation
 extern float shipPulse;  // engine flame oscillation (always ticks)
 extern float starDrift;  // menu star parallax offset
