@@ -30,7 +30,7 @@ int main()
 
         if (IsKeyPressed(KEY_ESCAPE))
         {
-            CloseWindow();
+            break;
         }
 
         if (IsKeyPressed(KEY_F))

@@ -34,6 +34,29 @@ static Rectangle settingsBtn = {
     50};
 
 static Texture2D settingsIcon;
+static Texture2D asteroidTexture;
+
+// ---------------- ASTEROIDS ----------------
+
+struct MenuAsteroid
+{
+    Vector2 position;
+    Vector2 velocity;
+
+    float radius;
+
+    float rotation;
+    float rotationSpeed;
+
+    float wobbleOffset;
+    float wobbleStrength;
+
+    float alpha;
+
+    int layer;
+};
+
+static std::vector<MenuAsteroid> menuAsteroids;
 
 // Ship patrol state
 static Vector2 shipMenuPos = {150.f, 620.f};
@@ -52,10 +75,10 @@ static const int HOVER_WAYPOINT = 1;
 
 // Waypoints: bottom-left → settings → bottom-right → top-left
 static const Vector2 waypoints[] = {
-    {150.f, 620.f},
+    {120.f, 620.f},
     {(float)VIRTUAL_WIDTH - 65.f, 55.f},
-    {(float)VIRTUAL_WIDTH - 150.f, 620.f},
-    {150.f, 100.f},
+    {(float)VIRTUAL_WIDTH - 65.f, 620.f},
+    {120.f, 55.f},
 };
 static const int WAYPOINT_COUNT = 4;
 
@@ -88,6 +111,46 @@ static void DrawStars()
     }
 }
 
+// ---------------- ASTEROID DRAW ----------------
+
+static void DrawAsteroids()
+{
+    Rectangle source = {
+        0,
+        0,
+        (float)asteroidTexture.width,
+        (float)asteroidTexture.height};
+
+    for (auto &a : menuAsteroids)
+    {
+        float size = a.radius * 2.f;
+
+        Rectangle dest = {
+            a.position.x,
+            a.position.y,
+            size,
+            size};
+
+        Vector2 origin = {
+            size / 2.f,
+            size / 2.f};
+
+        DrawTexturePro(
+            asteroidTexture,
+            source,
+            dest,
+            origin,
+            a.rotation,
+            Fade(WHITE, a.alpha));
+
+        // subtle cinematic shadow/glow
+        DrawCircleV(
+            a.position,
+            a.radius * 1.2f,
+            Fade(BLACK, 0.08f * a.alpha));
+    }
+}
+
 static void DrawSpaceship(Vector2 pos, float angle, float scale, float alpha)
 {
     float w = shipTexture.width * scale;
@@ -108,8 +171,8 @@ static void DrawSpaceship(Vector2 pos, float angle, float scale, float alpha)
     float fp = 0.55f + 0.45f * sinf(shipPulse * 12.f);
 
     Vector2 flameTip = {
-        back.x - cosf(angle) * 48.f * fp,
-        back.y - sinf(angle) * 48.f * fp};
+        back.x - cosf(angle) * 38.f * fp,
+        back.y - sinf(angle) * 38.f * fp};
 
     Vector2 flameL = {
         back.x + cosf(angle + PI / 2.f) * 10.f,
@@ -124,7 +187,7 @@ static void DrawSpaceship(Vector2 pos, float angle, float scale, float alpha)
     DrawTriangle(flameTip, flameL, flameR, Fade(YELLOW, alpha * 0.50f));
 
     // 2. Oval engine glow
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < 3; i++)
     {
         float t = (float)i / 8.f;
 
@@ -135,7 +198,7 @@ static void DrawSpaceship(Vector2 pos, float angle, float scale, float alpha)
         float radius = (10.f - 5.f * t) * scale * 8.f;
 
         DrawCircleV(p, radius, Fade(ORANGE, alpha * 0.85f * (1.f - t * 0.4f)));
-        DrawCircleV(p, radius * 0.9f, Fade(YELLOW, alpha * (1.f - t * 0.5f)));
+        DrawCircleV(p, radius * 0.9f, Fade(YELLOW, alpha * 0.3f * (1.f - t * 0.5f)));
     }
 
     // 4. Ship texture on top
@@ -377,6 +440,62 @@ static void UpdateMenuShip(float dt)
     shipMenuAngle = lerpAngle(shipMenuAngle, atan2f(dy, dx), 0.15f);
 }
 
+// ---------------- ASTEROID UPDATE ----------------
+
+static void UpdateAsteroids(float dt)
+{
+    float t = GetTime();
+
+    for (auto &a : menuAsteroids)
+    {
+        a.position.x += a.velocity.x * dt;
+        a.position.y += a.velocity.y * dt;
+
+        a.position.y += sinf(t + a.wobbleOffset) * a.wobbleStrength * dt;
+
+        a.rotation += a.rotationSpeed * dt;
+
+        if (a.position.x < -220.f ||
+            a.position.x > VIRTUAL_WIDTH + 220.f ||
+            a.position.y < -220.f ||
+            a.position.y > VIRTUAL_HEIGHT + 220.f)
+        {
+            int side = GetRandomValue(0, 2);
+
+            if (side == 0)
+            {
+                a.position = {
+                    (float)(VIRTUAL_WIDTH + GetRandomValue(50, 250)),
+                    (float)GetRandomValue(0, VIRTUAL_HEIGHT)};
+
+                a.velocity = {
+                    -(20.f + a.layer * 18.f),
+                    8.f + (float)GetRandomValue(-10, 20)};
+            }
+            else if (side == 1)
+            {
+                a.position = {
+                    (float)GetRandomValue(0, VIRTUAL_WIDTH),
+                    (float)(VIRTUAL_HEIGHT + GetRandomValue(50, 250))};
+
+                a.velocity = {
+                    15.f + a.layer * 12.f,
+                    -(25.f + a.layer * 10.f)};
+            }
+            else
+            {
+                a.position = {
+                    -220.f,
+                    (float)GetRandomValue(0, VIRTUAL_HEIGHT)};
+
+                a.velocity = {
+                    25.f + a.layer * 18.f,
+                    6.f + (float)GetRandomValue(-12, 18)};
+            }
+        }
+    }
+}
+
 // ---------------- PUBLIC FUNCTIONS ----------------
 
 void InitMenu()
@@ -387,10 +506,58 @@ void InitMenu()
     settingsIcon = LoadTexture("assets/icons/settings.png");
     SetTextureFilter(settingsIcon, TEXTURE_FILTER_BILINEAR);
 
+    asteroidTexture = LoadTexture("assets/ast.png");
+    SetTextureFilter(asteroidTexture, TEXTURE_FILTER_BILINEAR);
+
     for (int i = 0; i < 250; i++)
     {
         menuStars.push_back({(float)GetRandomValue(0, VIRTUAL_WIDTH),
                              (float)GetRandomValue(0, VIRTUAL_HEIGHT)});
+    }
+
+    // ---------------- INIT ASTEROIDS ----------------
+
+    for (int i = 0; i < 9; i++)
+    {
+        MenuAsteroid a;
+
+        a.layer = GetRandomValue(0, 2);
+
+        a.position = {
+            (float)GetRandomValue(-200, VIRTUAL_WIDTH + 200),
+            (float)GetRandomValue(-100, VIRTUAL_HEIGHT + 100)};
+
+        if (a.layer == 0)
+        {
+            a.radius = (float)GetRandomValue(12, 22);
+            a.velocity = {-18.f, 6.f};
+            a.alpha = 0.18f;
+        }
+        else if (a.layer == 1)
+        {
+            a.radius = (float)GetRandomValue(22, 38);
+            a.velocity = {-35.f, 12.f};
+            a.alpha = 0.28f;
+        }
+        else
+        {
+            a.radius = (float)GetRandomValue(45, 75);
+            a.velocity = {-55.f, 20.f};
+            a.alpha = 0.40f;
+        }
+
+        a.rotation = (float)GetRandomValue(0, 360);
+
+        a.rotationSpeed =
+            (float)GetRandomValue(-18, 18);
+
+        a.wobbleOffset =
+            (float)GetRandomValue(0, 1000);
+
+        a.wobbleStrength =
+            (float)GetRandomValue(2, 8);
+
+        menuAsteroids.push_back(a);
     }
 }
 
@@ -401,6 +568,7 @@ void UpdateMenu(GameState &state, float scale, int offsetX, int offsetY)
     starDrift += dt * 30.0f;
 
     UpdateMenuShip(dt);
+    UpdateAsteroids(dt);
 
     Vector2 mouse = GetMousePosition();
     mouse.x = (mouse.x - offsetX) / scale;
@@ -429,6 +597,7 @@ void DrawMenu()
 {
     DrawNebula();
     DrawStars();
+    DrawAsteroids();
     DrawEngineTrail();
     DrawSpaceship(shipMenuPos, shipMenuAngle, 0.1f, 1.0f);
     DrawTitle();
@@ -443,4 +612,5 @@ void UnloadMenu()
 {
     UnloadTexture(shipTexture);
     UnloadTexture(settingsIcon);
+    UnloadTexture(asteroidTexture);
 }
